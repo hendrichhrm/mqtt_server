@@ -10,7 +10,7 @@ const send_message = async (waktu, nilai) => {
                 value_array: nilai
             })
         };
-        const response = await fetch('http://localhost:3000/skripsi/byhendrich/dashtoesp', options);
+        const response = await fetch('https://mqtt-server-kappa.vercel.app/byhendrich/dashtoesp', options);
         if (!response.ok) {
             throw new Error(`Error in uploading to database: ${response.statusText}`);
         }
