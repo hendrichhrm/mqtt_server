@@ -21,7 +21,6 @@ router.post('/send-message', async (req, res) => {
 router.get('/data', async (req, res) => {
     try {
         const data = await DataValue.find();
-
         // Convert waktu to GMT+7 for each data entry
         const dataWithTimezone = data.map(entry => {
             const localizedTime = moment(entry.waktu).tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
@@ -33,6 +32,7 @@ router.get('/data', async (req, res) => {
 
         res.status(200).json(dataWithTimezone);
     } catch (error) {
+        console.error('Error getting data:', error);
         res.status(500).json({ error: error.message });
     }
 });

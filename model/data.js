@@ -1,13 +1,11 @@
 const mongoose = require('mongoose');
 
 const DataSchema = new mongoose.Schema({
-    waktu: { type: String, required: false },
+    waktu: { type: Date, required: true }, // Gunakan tipe Date untuk waktu
     nilai: {
-        Unit: { type: String, required: false },
-        Setpoint: { type: Number, required: false },
-        //Sampling: { type: Number, required: false },
-        Temperature: { type: Number, required: false },
-        //DutyCycle: { type: Number, required: false }
+        Unit: { type: String, required: true },
+        Setpoint: { type: Number, required: true },
+        Temperature: { type: Number, required: true },
     }
 });
 

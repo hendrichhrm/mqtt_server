@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const mqttController = require('./controller/mqttController');
-const messageController = require('./controller/messageController');
+const messageController = require('./controller/messageController'); // Import router messageController
+const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
@@ -46,11 +47,19 @@ app.get('/skripsi/byhendrich/esptodash', (req, res) => {
     });
 });
 
-app.use('/api', (req, res, next) => {
-    messageController(req, res, next).catch((err) => {
-        console.error('Error in /api:', err);
-        res.status(500).send('Internal Server Error');
-    });
+app.use('/api', messageController); // Use messageController for /api routes
+
+// Tugas terjadwal untuk menghapus data yang lebih dari 30 hari
+cron.schedule('0 0 * * *', async () => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    try {
+        await DataValue.deleteMany({ waktu: { $lt: thirtyDaysAgo.toISOString() } });
+        console.log('Old data deleted');
+    } catch (err) {
+        console.error('Error deleting old data:', err);
+    }
 });
 
 app.listen(port, host, () => {
