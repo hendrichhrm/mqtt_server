@@ -3,7 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const mqttController = require('./controller/mqttController');
 const messageController = require('./controller/messageController'); // Import router messageController
-const last30DaysRoute = require('./controller/last30DaysController'); // Import last30DaysRoute
+const last30DaysRoute = require('./controller/last30DaysRoute'); // Import last30DaysRoute
 const cron = require('node-cron');
 require('dotenv').config();
 
