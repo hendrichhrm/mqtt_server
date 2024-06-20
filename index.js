@@ -3,7 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const mqttController = require('./controller/mqttController');
 const messageController = require('./controller/messageController'); // Import router messageController
-const last30DaysRoute = require('./controller/last30DaysRoute'); // Import last30DaysRoute
+const last30DaysController = require('./controller/last30DaysController'); // Import last30DaysController
 const cron = require('node-cron');
 require('dotenv').config();
 
@@ -49,7 +49,7 @@ app.get('/skripsi/byhendrich/esptodash', (req, res) => {
 });
 
 app.use('/api', messageController); // Use messageController for /api routes
-app.use('/api', last30DaysRoute); // Use last30DaysRoute for /api routes
+app.use('/api', last30DaysController); // Use last30DaysController for /api routes
 
 // Tugas terjadwal untuk menghapus data yang lebih dari 30 hari
 cron.schedule('0 0 * * *', async () => {
