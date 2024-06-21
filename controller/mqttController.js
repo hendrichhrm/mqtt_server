@@ -18,11 +18,11 @@ const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
 client.on('connect', () => {
     console.log('MQTT client connected');
-    client.subscribe(['skripsi/byhendrich/dashtoesp', 'skripsi/byhendrich/esptodash'], { qos: 2 }, (error) => {
+    client.subscribe(['skripsi/byhendrich/dashtoesp', 'skripsi/byhendrich/esptodash', 'skripsi/byhendrich/esp32status'], { qos: 2 }, (error) => {
         if (error) {
             console.log('Subscription error:', error);
         } else {
-            console.log('Subscribed to skripsi/byhendrich/dashtoesp and skripsi/byhendrich/esptodash');
+            console.log('Subscribed to skripsi/byhendrich/dashtoesp, skripsi/byhendrich/esptodash, and skripsi/byhendrich/esp32status');
         }
     });
 });
@@ -57,7 +57,7 @@ client.on('message', async (topic, message) => {
             });
             console.log('esptodash success');
         }
-
+            
         if (newEntry) {
             await newEntry.save();
             console.log('Data saved to MongoDB:', newEntry);
