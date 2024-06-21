@@ -47,9 +47,9 @@ client.on('message', async (topic, message) => {
             });
             console.log('dashtoesp success');
         } else if (topic === 'skripsi/byhendrich/esptodash') {
-            if (!data.Unit || !data.Setpoint || !data.Temperature) {
-                console.error('Missing data fields', data);
-                return;
+            if (!data.Unit || !data.Setpoint || data.Temperature === undefined) {
+                console.error('Missing required data fields', data);
+                return;  // Skip saving incomplete data
             }
 
             let newEntry = new DataValue({
