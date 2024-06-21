@@ -16,7 +16,10 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
 // Connect to MQTT broker
 const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
-client.on('connect', () => {
+client.on('connect',async (topic, message) => {
+    const data = JSON.parse(message.toString());
+        console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
+
     console.log('MQTT client connected');
     client.subscribe(['skripsi/byhendrich/dashtoesp', 'skripsi/byhendrich/esptodash', 'skripsi/byhendrich/esp32status'], { qos: 2 }, (error) => {
         if (error) {
@@ -49,9 +52,8 @@ client.on('message', async (topic, message) => {
                 return;
             }
 
-            const timestampInJakarta = moment(data.Timestamp).tz('Asia/Jakarta').format();
             let newEntry = new DataValue({
-                waktu: timestampInJakarta,
+                waktu: moment().tz('Asia/Jakarta').format(), // Assign current time in Jakarta timezone
                 nilai: {
                     Unit: data.Unit,
                     Setpoint: data.Setpoint,
