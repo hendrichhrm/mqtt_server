@@ -4,6 +4,7 @@ const { DataValue } = require('../model/data');
 
 const router = express.Router();
 
+// Route to handle POST requests to save data
 router.post('/send-message', async (req, res) => {
     const { waktu, nilai } = req.body;
     console.log('Received data to save:', req.body);
@@ -18,7 +19,8 @@ router.post('/send-message', async (req, res) => {
     }
 });
 
-router.get('/data', async (req, res) => {
+// Route to handle GET requests to fetch data
+router.get('/data', async (res) => {
     try {
         const data = await DataValue.find();
         // Convert waktu to GMT+7 for each data entry

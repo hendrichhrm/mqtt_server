@@ -1,6 +1,6 @@
 const { DataValue } = require('../model/data');
 
-const getLast30Days = async (req, res) => {
+const getLast30Days = async (res) => {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
