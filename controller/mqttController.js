@@ -33,12 +33,10 @@ client.on('message', async (topic, message) => {
         console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
         let newEntry;
 
-        const timestamp = new Date().toISOString();  // Use ISO string format
-
         if (topic === 'skripsi/byhendrich/dashtoesp') {
             const { Unit, Setpoint } = data;
             newEntry = new DataValue({
-                waktu: timestamp,
+                waktu: moment().tz('Asia/Jakarta').format(),  // Use moment-timezone to set time in GMT+7
                 nilai: {
                     Unit: Unit,
                     Setpoint: Setpoint
@@ -46,9 +44,10 @@ client.on('message', async (topic, message) => {
             });
             console.log('dashtoesp success');
         } else if (topic === 'skripsi/byhendrich/esptodash') {
-            const { Unit, Setpoint, Temperature } = data;
+            const { Unit, Setpoint, Temperature, Timestamp } = data;
+            const timestampInJakarta = moment(Timestamp).tz('Asia/Jakarta').format();  // Convert to Jakarta time
             newEntry = new DataValue({
-                waktu: timestamp,
+                waktu: timestampInJakarta,
                 nilai: {
                     Unit: Unit,
                     Setpoint: Setpoint,
