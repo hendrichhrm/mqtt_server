@@ -33,7 +33,7 @@ client.on('message', async (topic, message) => {
         console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
         let newEntry;
 
-        const timestamp = moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
+        const timestamp = new Date().toISOString();  // Use ISO string format
 
         if (topic === 'skripsi/byhendrich/dashtoesp') {
             const { Unit, Setpoint } = data;
