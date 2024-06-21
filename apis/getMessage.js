@@ -5,6 +5,7 @@ const get_message = async () => {
             headers: {
                 'Content-type': 'application/json'
             },
+            
         }
         const response = await fetch('https://mqtt-server-kappa.vercel.app/skripsi/byhendrich/esptodash', options);
         if (!response.ok) {

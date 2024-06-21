@@ -44,20 +44,21 @@ client.on('message', async (topic, message) => {
             });
             console.log('dashtoesp success');
         } else if (topic === 'skripsi/byhendrich/esptodash') {
-            const { Unit, Setpoint, Temperature, Timestamp } = data;
-            const timestampInJakarta = moment(Timestamp).tz('Asia/Jakarta').format();  // Convert to Jakarta time
-            newEntry = new DataValue({
+            if (!data.Unit || !data.Setpoint || !data.Temperature) {
+                console.error('Missing data fields', data);
+                return;
+            }
+
+            const timestampInJakarta = moment(data.Timestamp).tz('Asia/Jakarta').format();
+            let newEntry = new DataValue({
                 waktu: timestampInJakarta,
                 nilai: {
-                    Unit: Unit,
-                    Setpoint: Setpoint,
-                    Temperature: Temperature
+                    Unit: data.Unit,
+                    Setpoint: data.Setpoint,
+                    Temperature: data.Temperature
                 }
             });
-            console.log('esptodash success');
-        }
-            
-        if (newEntry) {
+            console.log('Attempting to save:', newEntry);
             await newEntry.save();
             console.log('Data saved to MongoDB:', newEntry);
         }
