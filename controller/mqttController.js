@@ -5,13 +5,12 @@ const { DataValue } = require('../model/data');
 require('dotenv').config();
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {
-        console.log('Connected to MongoDB');
-    })
-    .catch(err => {
-        console.error('Error connecting to MongoDB', err);
-    });
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => console.error('Error connecting to MongoDB:', err));
 
 // Connect to MQTT broker
 const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
@@ -28,7 +27,8 @@ client.on('connect', () => {
 });
 
 client.on('message', async (topic, message) => {
-    try {
+
+        try {
         const data = JSON.parse(message.toString());
         console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
         let newEntry;
@@ -36,30 +36,30 @@ client.on('message', async (topic, message) => {
         if (topic === 'skripsi/byhendrich/dashtoesp') {
             const { Unit, Setpoint } = data;
             newEntry = new DataValue({
-                waktu: moment().tz('Asia/Jakarta').format(),  // Use moment-timezone to set time in GMT+7
+                waktu: moment().tz('Asia/Jakarta').format(),
                 nilai: {
                     Unit: Unit,
                     Setpoint: Setpoint
-                }
+                },user: data.userId
             });
             console.log('dashtoesp success');
-        } else if (topic === 'skripsi/byhendrich/esptodash') {
-            if (!data.Unit || !data.Setpoint || data.Temperature === undefined) {
-                console.error('Missing required data fields', data);
-                return;  // Skip saving incomplete data
-            }
-
-            newEntry = new DataValue({
-                waktu: moment().tz('Asia/Jakarta').format(), // Assign current time in Jakarta timezone
-                nilai: {
-                    Unit: data.Unit,
-                    Setpoint: data.Setpoint,
-                    Temperature: data.Temperature
-                }
-            });
-            console.log('Attempting to save:', newEntry);
             await newEntry.save();
-            console.log('Data saved to MongoDB:', newEntry);
+            console.log('Data saved to MongoDB for dashtoesp:', newEntry);
+        } else if (topic === 'skripsi/byhendrich/esptodash') {
+            const { Unit, Setpoint, Temperature, user } = data;
+            newEntry = new DataValue({
+                waktu: moment().tz('Asia/Jakarta').format(),
+                nilai: {
+                    Unit: Unit || null,
+                    Setpoint: Setpoint || null,
+                    Temperature: Temperature || null
+                },user: userId
+            });
+            console.log('Attempting to save to database for esptodash:', newEntry);
+            await newEntry.save();
+            console.log('Data saved to MongoDB for esptodash:', newEntry);
+        } else {
+            console.log('Received data on an unexpected topic:', topic);
         }
     } catch (error) {
         console.error('Error processing message:', error);
@@ -82,10 +82,9 @@ const getPesan = async (req, res) => {
     try {
         const messages = await DataValue.find();
         res.json(messages);
-    } catch (err) {
-        console.error('Error retrieving messages:', err);
-        res.status(500).send(err.message);
+    } catch (error) {
+        console.error('Error retrieving messages:', error);
+        res.status(500).send(error.message);
     }
 };
-
 module.exports = { publishPesan, getPesan };

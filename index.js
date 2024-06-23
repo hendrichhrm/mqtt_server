@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const mqttController = require('./controller/mqttController');
 const messageController = require('./controller/messageController');
 const last30DaysController = require('./controller/last30DaysController');
+const authController = require('./controller/authController'); // Ensure this line is correct
+const authMiddleware = require('./middleware/authMiddleware');
 const cron = require('node-cron');
 require('dotenv').config();
 
@@ -12,16 +14,20 @@ const app = express();
 const mongoUri = process.env.MONGODB_URI;
 const port = process.env.PORT || 3000;
 const host = process.env.HOST || '0.0.0.0';
+const jwt_secret = process.env.JWT_SECRET;
 
 console.log('MongoDB URI:', mongoUri);
+console.log('jwt_secret:', jwt_secret);
+mongoose.set('debug', true);
 
 mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000, 
 }).then(() => {
     console.log('Connected to MongoDB');
 }).catch((err) => {
-    console.error(`Failed to connect to MongoDB: ${err}`);
+    console.error(`Failed to connect to MongoDB: ${err.message}`);
 });
 
 app.use(cors());
@@ -34,7 +40,9 @@ app.use((req, res, next) => {
     next();
 });
 
-app.post('/skripsi/byhendrich/dashtoesp', async (req, res) => {
+app.use('/auth', authController); // Ensure this line is correct
+// Protected routes
+app.post('/skripsi/byhendrich/dashtoesp', authMiddleware, async (req, res) => {
     try {
         await mqttController.publishPesan(req, res);
     } catch (err) {
@@ -43,7 +51,7 @@ app.post('/skripsi/byhendrich/dashtoesp', async (req, res) => {
     }
 });
 
-app.get('/skripsi/byhendrich/esptodash', async (req, res) => {
+app.get('/skripsi/byhendrich/esptodash', authMiddleware, async (req, res) => {
     try {
         await mqttController.getPesan(req, res);
     } catch (err) {
@@ -52,10 +60,9 @@ app.get('/skripsi/byhendrich/esptodash', async (req, res) => {
     }
 });
 
-app.use('/api/messages', messageController); // Use messageController for /api/messages routes
-app.use('/api', last30DaysController); // Use last30DaysController for /api/last30days routes
+app.use('/api/messages', authMiddleware, messageController); 
+app.use('/api', authMiddleware, last30DaysController); 
 
-// Scheduled task to delete data older than 30 days
 cron.schedule('0 0 * * *', async () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

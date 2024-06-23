@@ -5,12 +5,12 @@ const { DataValue } = require('../model/data');
 const router = express.Router();
 
 // Route to handle POST requests to save data
-router.post('/send-message', async (req, res) => {
+router.post('/send-message', authMiddleware, async (req, res) => {
     const { waktu, nilai } = req.body;
     console.log('Received data to save:', req.body);
     try {
         const timestampInJakarta = moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
-        const newData = new DataValue({ waktu: timestampInJakarta, nilai });
+        const newData = new DataValue({ waktu: timestampInJakarta, nilai, user: req.user.id });
         await newData.save();
         console.log('Data saved to MongoDB:', newData);
         res.status(200).json({ message: 'Message sent successfully', data: newData });
@@ -21,7 +21,7 @@ router.post('/send-message', async (req, res) => {
 });
 
 // Route to handle GET requests to fetch data
-router.get('/data', async (req, res) => {
+router.get('/data', authMiddleware, async (req, res) => {
     try {
         const data = await DataValue.find();
         // Convert waktu to GMT+7 for each data entry
