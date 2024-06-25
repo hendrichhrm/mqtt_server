@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const mqttController = require('./controller/mqttController');
 const messageController = require('./controller/messageController');
 const last30DaysController = require('./controller/last30DaysController');
-const authController = require('./controller/authController'); // Ensure this line is correct
+const authController = require('./controller/authController');
 const authMiddleware = require('./middleware/authMiddleware');
 const cron = require('node-cron');
 require('dotenv').config();
@@ -30,9 +30,10 @@ mongoose.connect(mongoUri, {
     console.error(`Failed to connect to MongoDB: ${err.message}`);
 });
 
+// Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' })); // Ensure JSON parsing with a reasonable limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Log incoming requests
 app.use((req, res, next) => {
@@ -40,8 +41,10 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/auth', authController); // Ensure this line is correct
-// Protected routes
+// Auth routes
+app.use('/auth', authController); 
+
+// Protected routes with auth middleware
 app.post('/skripsi/byhendrich/dashtoesp', authMiddleware, async (req, res) => {
     try {
         await mqttController.publishPesan(req, res);
@@ -60,9 +63,11 @@ app.get('/skripsi/byhendrich/esptodash', authMiddleware, async (req, res) => {
     }
 });
 
+// Other API routes
 app.use('/api/messages', authMiddleware, messageController); 
 app.use('/api', authMiddleware, last30DaysController); 
 
+// Cron job for cleaning up old data
 cron.schedule('0 0 * * *', async () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -73,6 +78,15 @@ cron.schedule('0 0 * * *', async () => {
     } catch (err) {
         console.error('Error deleting old data:', err);
     }
+});
+
+// Error handling for uncaught exceptions and promise rejections
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
 });
 
 app.listen(port, host, () => {

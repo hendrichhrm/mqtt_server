@@ -1,6 +1,7 @@
 const express = require('express');
 const moment = require('moment-timezone');
 const { DataValue } = require('../model/data');
+const authMiddleware = require('../middleware/authMiddleware'); 
 
 const router = express.Router();
 
@@ -10,7 +11,11 @@ router.post('/send-message', authMiddleware, async (req, res) => {
     console.log('Received data to save:', req.body);
     try {
         const timestampInJakarta = moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
-        const newData = new DataValue({ waktu: timestampInJakarta, nilai, user: req.user.id });
+        const newData = new DataValue({
+            waktu: timestampInJakarta,
+            nilai: nilai,
+            user: req.user.username  
+        });
         await newData.save();
         console.log('Data saved to MongoDB:', newData);
         res.status(200).json({ message: 'Message sent successfully', data: newData });
@@ -20,11 +25,9 @@ router.post('/send-message', authMiddleware, async (req, res) => {
     }
 });
 
-// Route to handle GET requests to fetch data
 router.get('/data', authMiddleware, async (req, res) => {
     try {
         const data = await DataValue.find();
-        // Convert waktu to GMT+7 for each data entry
         const dataWithTimezone = data.map(entry => {
             const localizedTime = moment(entry.waktu).tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
             return {

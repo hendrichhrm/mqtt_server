@@ -1,12 +1,29 @@
 const express = require('express');
-const router = express.Router();
 const moment = require('moment-timezone');
 const { DataValue } = require('../model/data');
 const authMiddleware = require('../middleware/authMiddleware');
 require('dotenv').config();
-let lastLoggedInUser = ''; 
 
-router.get('/last30days', authMiddleware, getLast30Days,  async (req, res) => {
+const router = express.Router();
+
+// Route to handle POST requests to save data
+router.post('/send-message', authMiddleware, async (req, res) => {
+    const { waktu, nilai } = req.body;
+    console.log('Received data to save:', req.body);
+    try {
+        const timestampInJakarta = moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
+        const newData = new DataValue({ waktu: timestampInJakarta, nilai, user: req.user.username }); 
+        await newData.save();
+        console.log('Data saved to MongoDB:', newData);
+        res.status(200).json({ message: 'Message sent successfully', data: newData });
+    } catch (error) {
+        console.error('Error saving data:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Route to handle GET requests to fetch data
+router.get('/last30days', authMiddleware, async (req, res) => {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -16,7 +33,7 @@ router.get('/last30days', authMiddleware, getLast30Days,  async (req, res) => {
             waktu: { $gte: thirtyDaysAgo }
         })
         .sort({ waktu: -1 })
-        .populate('user', 'username'); 
+        .populate('user', 'username');  // Populate field user dengan username
 
         console.log('Data received from MongoDB:', data);
 
@@ -37,15 +54,16 @@ router.get('/last30days', authMiddleware, getLast30Days,  async (req, res) => {
 
         const responseObject = {
             data: dataWithTimezone,
-            lastLoggedInUser: lastLoggedInUser 
+            lastLoggedInUser: req.user.username  // Gunakan req.user.username dari middleware
         };
 
-        console.log('Response to be sent to frontend:', JSON.stringify(responseObject, null, 2)); 
+        console.log('Response to be sent to frontend:', JSON.stringify(responseObject, null, 2));
         res.status(200).json(responseObject);
     } catch (error) {
         console.error('Error getting last 30 days data:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
 
 module.exports = router;

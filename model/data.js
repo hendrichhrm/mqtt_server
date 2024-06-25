@@ -6,8 +6,9 @@ const DataSchema = new mongoose.Schema({
         Unit: { type: String, required: false },
         Setpoint: { type: Number, required: false },
         Temperature: { type: Number, required: false }
+        
     },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Add reference to User
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false } 
 }, { collection: 'datavalues' });
 
 const DataValue = mongoose.model('DataValue', DataSchema);

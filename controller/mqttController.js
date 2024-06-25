@@ -21,43 +21,60 @@ client.on('connect', () => {
         if (error) {
             console.log('Subscription error:', error);
         } else {
-            console.log('Subscribed to skripsi/byhendrich/dashtoesp, skripsi/byhendrich/esptodash, and skripsi/byhendrich/esp32status');
+            console.log('Subscribed to topics');
         }
     });
 });
 
 client.on('message', async (topic, message) => {
-
-        try {
+    try {
         const data = JSON.parse(message.toString());
         console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
+        
         let newEntry;
 
-        if (topic === 'skripsi/byhendrich/dashtoesp') {
-            const { Unit, Setpoint } = data;
-            newEntry = new DataValue({
-                waktu: moment().tz('Asia/Jakarta').format(),
-                nilai: {
-                    Unit: Unit,
-                    Setpoint: Setpoint
-                },user: data.userId
-            });
-            console.log('dashtoesp success');
+        if (topic == 'skripsi/byhendrich/dashtoesp' || topic == 'skripsi/byhendrich/esptodash') {
+        
+            const { Unit, Setpoint, Temperature } = data;
+
+            if (topic == 'skripsi/byhendrich/dashtoesp') {
+                if (!Unit || !Setpoint) {
+                    
+                    console.error('Missing required fields in message:', data);
+                    return;
+                }
+                newEntry = new DataValue({
+                    waktu: moment().tz('Asia/Jakarta').format(),
+                    nilai: {
+                        Unit: Unit,
+                        Setpoint: Setpoint
+                    }
+                });
+            } else if (topic == 'skripsi/byhendrich/esptodash') {
+                console.log(Unit);
+                console.log(Setpoint);
+                console.log(Temperature);
+                if (!Unit || !Setpoint || !Temperature) {
+                    console.error('Missing required fields in message:', data);
+                    return;
+                }
+                console.log('ini string 4');
+                console.log(new DataValue());
+                console.log('ini string5')
+                newEntry = new DataValue({
+                    waktu: moment().tz('Asia/Jakarta').format(),
+                    nilai: {
+                        Unit: Unit,
+                        Setpoint: Setpoint,
+                        Temperature: Temperature
+                    }
+                });
+            }
+            console.log(topic)
             await newEntry.save();
-            console.log('Data saved to MongoDB for dashtoesp:', newEntry);
-        } else if (topic === 'skripsi/byhendrich/esptodash') {
-            const { Unit, Setpoint, Temperature, user } = data;
-            newEntry = new DataValue({
-                waktu: moment().tz('Asia/Jakarta').format(),
-                nilai: {
-                    Unit: Unit || null,
-                    Setpoint: Setpoint || null,
-                    Temperature: Temperature || null
-                },user: userId
-            });
-            console.log('Attempting to save to database for esptodash:', newEntry);
-            await newEntry.save();
-            console.log('Data saved to MongoDB for esptodash:', newEntry);
+            console.log('Data saved to MongoDB:', newEntry);
+        } else if (topic === 'skripsi/byhendrich/esp32status') {
+            console.log('Received ESP32 status update:', data.status);
         } else {
             console.log('Received data on an unexpected topic:', topic);
         }
@@ -78,13 +95,14 @@ const publishPesan = (req, res) => {
     });
 };
 
+// Function to retrieve messages from MongoDB
 const getPesan = async (req, res) => {
     try {
-        const messages = await DataValue.find();
         res.json(messages);
     } catch (error) {
         console.error('Error retrieving messages:', error);
         res.status(500).send(error.message);
     }
 };
+
 module.exports = { publishPesan, getPesan };
