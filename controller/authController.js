@@ -54,13 +54,6 @@ router.post('/login', async (req, res) => {
         // Update isActive status to true
         user.isActive = true;
         await user.save();
-        
-        newEntry = new User({
-                    waktu: moment().tz('Asia/Jakarta').format(),
-                    nilai: {
-                        username: username
-                    },
-                });
 
         console.log('User logged in:', username);
         res.status(200).json({ token, userId: user._id }); // Return user ID
