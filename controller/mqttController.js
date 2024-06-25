@@ -38,11 +38,7 @@ client.on('message', async (topic, message) => {
             const { Unit, Setpoint, Temperature } = data;
 
             if (topic == 'skripsi/byhendrich/dashtoesp') {
-                if (!Unit || !Setpoint) {
-                    
-                    console.error('Missing required fields in message:', data);
-                    return;
-                }
+                
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
                     nilai: {
@@ -54,13 +50,7 @@ client.on('message', async (topic, message) => {
                 console.log(Unit);
                 console.log(Setpoint);
                 console.log(Temperature);
-                if (!Unit || !Setpoint || !Temperature) {
-                    console.error('Missing required fields in message:', data);
-                    return;
-                }
-                console.log('ini string 4');
-                console.log(new DataValue());
-                console.log('ini string5')
+                
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
                     nilai: {
