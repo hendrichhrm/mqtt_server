@@ -23,7 +23,8 @@ mongoose.set('debug', true);
 mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000, 
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000
 }).then(() => {
     console.log('Connected to MongoDB');
 }).catch((err) => {
