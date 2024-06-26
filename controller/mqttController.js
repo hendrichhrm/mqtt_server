@@ -50,7 +50,11 @@ client.on('message', async (topic, message) => {
                 console.log(Unit);
                 console.log(Setpoint);
                 console.log(Temperature);
-                
+                const tempValue = parseFloat(Temperature.replace(/[^0-9.-]+/g, '')); // Remove non-numeric characters
+
+                if (isNaN(tempValue)) {
+                    throw new Error(`Invalid temperature value: ${Temperature}`);
+                }
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
                     nilai: {
