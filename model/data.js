@@ -5,7 +5,7 @@ const DataSchema = new mongoose.Schema({
     nilai: {
         Unit: { type: String, required: false },
         Setpoint: { type: Number, required: false },
-        Temperature: { type: Number, required: false }
+        Temperature: { type: String, required: false }
         
     },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false } 
