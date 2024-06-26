@@ -50,7 +50,7 @@ client.on('message', async (topic, message) => {
                 console.log(Unit);
                 console.log(Setpoint);
                 console.log(Temperature);
-                const tempValue = parseFloat(Temperature.replace(/[^0-9.-]+/g, '')); // Remove non-numeric characters
+                const tempValue = parseFloat(Temperature.replace(/[^0-9.-]+/g, '')); 
 
                 if (isNaN(tempValue)) {
                     throw new Error(`Invalid temperature value: ${Temperature}`);
@@ -60,7 +60,7 @@ client.on('message', async (topic, message) => {
                     nilai: {
                         Unit: Unit,
                         Setpoint: Setpoint,
-                        Temperature: Temperature
+                        Temperature: tempValue
                     }
                 });
             }
