@@ -17,11 +17,15 @@ const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
 client.on('connect', () => {
     console.log('MQTT client connected');
-    client.subscribe(['skripsi/byhendrich/dashtoesp', 'skripsi/byhendrich/esptodash', 'skripsi/byhendrich/esp32status', 'skripsi/byhendrich/qos_metrics'], { qos: 2 }, (error) => {
+    client.subscribe([
+        'skripsi/byhendrich/dashtoesp',
+        'skripsi/byhendrich/esptodash',
+        'skripsi/byhendrich/esp32status',
+        'skripsi/byhendrich/latency_test/response'
+    ], { qos: 2 }, (error) => {
         if (error) {
             console.log('Subscription error:', error);
-        } 
-        else {
+        } else {
             console.log('Subscribed to topics');
         }
     });
@@ -32,14 +36,17 @@ client.on('message', async (topic, message) => {
         const data = JSON.parse(message.toString());
         console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
         
+        if (topic === 'skripsi/byhendrich/latency_test/response') {
+            // Handle latency response in the frontend
+            return;
+        }
+
         let newEntry;
 
         if (topic == 'skripsi/byhendrich/dashtoesp' || topic == 'skripsi/byhendrich/esptodash') {
-        
             const { Unit, Setpoint, Temperature } = data;
 
             if (topic == 'skripsi/byhendrich/dashtoesp') {
-                
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
                     nilai: {
@@ -47,12 +54,7 @@ client.on('message', async (topic, message) => {
                         Setpoint: Setpoint
                     }
                 });
-            } 
-            else if (topic == 'skripsi/byhendrich/esptodash') {
-                console.log(Unit);
-                console.log(Setpoint);
-                console.log(Temperature);
-                
+            } else if (topic === 'skripsi/byhendrich/esptodash') {
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
                     nilai: {
@@ -62,28 +64,16 @@ client.on('message', async (topic, message) => {
                     }
                 });
             }
-            console.log(topic)
             await newEntry.save();
             console.log('Data saved to MongoDB:', newEntry);
         } 
-        else if (topic == 'skripsi/byhendrich/esp32status') {
+        else if (topic === 'skripsi/byhendrich/esp32status') {
             console.log('Received ESP32 status update:', data.status);
-        } 
-        else if (topic == 'skripsi/byhendrich/qos_metrics') {
-            const { timestamp } = data;
-            const currentReceivedTime = Date.now();
-            const latency = currentReceivedTime - timestamp;
-            const jitter = Math.abs(latency - (currentReceivedTime - lastReceivedTime));
-            lastReceivedTime = currentReceivedTime;
-            console.log(`Received QoS metrics: Latency - ${latency} ms, Jitter - ${jitter} ms`);
-
-
         } 
         else {
             console.log('Received data on an unexpected topic:', topic);
         }
-    } 
-    catch (error) {
+    } catch (error) {
         console.error('Error processing message:', error);
     }
 });
@@ -100,13 +90,26 @@ const publishPesan = (req, res) => {
     });
 };
 
+// Function to send latency test message
+const sendLatencyTestMessage = () => {
+    const message = JSON.stringify({ sentTime: Date.now().toString() }); // Convert BigInt to string
+    client.publish('skripsi/byhendrich/latency_test/request', message, {}, (error) => {
+        if (error) {
+            console.error('Failed to publish latency test message:', error);
+        } else {
+            console.log('Latency test message sent');
+        }
+    });
+};
+
+// Schedule latency test message every 5 seconds
+setInterval(sendLatencyTestMessage, 5000);
+
 // Function to retrieve messages from MongoDB
 const getPesan = async (req, res) => {
     try {
-        const messages = await DataValue.find().sort({ waktu: -1 }).limit(100);
         res.json(messages);
-    } 
-    catch (error) {
+    } catch (error) {
         console.error('Error retrieving messages:', error);
         res.status(500).send(error.message);
     }
