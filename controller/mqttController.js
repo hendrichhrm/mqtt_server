@@ -17,10 +17,11 @@ const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
 client.on('connect', () => {
     console.log('MQTT client connected');
-    client.subscribe(['skripsi/byhendrich/dashtoesp', 'skripsi/byhendrich/esptodash', 'skripsi/byhendrich/esp32status'], { qos: 2 }, (error) => {
+    client.subscribe(['skripsi/byhendrich/dashtoesp', 'skripsi/byhendrich/esptodash', 'skripsi/byhendrich/esp32status', 'skripsi/byhendrich/qos_metrics'], { qos: 2 }, (error) => {
         if (error) {
             console.log('Subscription error:', error);
-        } else {
+        } 
+        else {
             console.log('Subscribed to topics');
         }
     });
@@ -46,12 +47,11 @@ client.on('message', async (topic, message) => {
                         Setpoint: Setpoint
                     }
                 });
-            } else if (topic == 'skripsi/byhendrich/esptodash') {
+            } 
+            else if (topic == 'skripsi/byhendrich/esptodash') {
                 console.log(Unit);
                 console.log(Setpoint);
                 console.log(Temperature);
-                
-
                 
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
@@ -65,12 +65,25 @@ client.on('message', async (topic, message) => {
             console.log(topic)
             await newEntry.save();
             console.log('Data saved to MongoDB:', newEntry);
-        } else if (topic === 'skripsi/byhendrich/esp32status') {
+        } 
+        else if (topic == 'skripsi/byhendrich/esp32status') {
             console.log('Received ESP32 status update:', data.status);
-        } else {
+        } 
+        else if (topic == 'skripsi/byhendrich/qos_metrics') {
+            const { timestamp } = data;
+            const currentReceivedTime = Date.now();
+            const latency = currentReceivedTime - timestamp;
+            const jitter = Math.abs(latency - (currentReceivedTime - lastReceivedTime));
+            lastReceivedTime = currentReceivedTime;
+            console.log(`Received QoS metrics: Latency - ${latency} ms, Jitter - ${jitter} ms`);
+
+
+        } 
+        else {
             console.log('Received data on an unexpected topic:', topic);
         }
-    } catch (error) {
+    } 
+    catch (error) {
         console.error('Error processing message:', error);
     }
 });
@@ -90,8 +103,10 @@ const publishPesan = (req, res) => {
 // Function to retrieve messages from MongoDB
 const getPesan = async (req, res) => {
     try {
+        const messages = await DataValue.find().sort({ waktu: -1 }).limit(100);
         res.json(messages);
-    } catch (error) {
+    } 
+    catch (error) {
         console.error('Error retrieving messages:', error);
         res.status(500).send(error.message);
     }
