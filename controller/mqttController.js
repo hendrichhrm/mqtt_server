@@ -1,3 +1,8 @@
+//This code is Created by Hendrich H M
+// You could adjust this code to your needs
+// However, you can't remove the author's because it's against the law
+// This code is Copyright of the author
+
 const mqtt = require('mqtt');
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
@@ -13,15 +18,14 @@ mongoose.connect(process.env.MONGODB_URI, {
 .catch(err => console.error('Error connecting to MongoDB:', err));
 
 // Connect to MQTT broker
-const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+let client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
 
 client.on('connect', () => {
     console.log('MQTT client connected');
     client.subscribe([
         'skripsi/byhendrich/dashtoesp',
         'skripsi/byhendrich/esptodash',
-        'skripsi/byhendrich/esp32status',
-        'skripsi/byhendrich/latency_test/response'
+        'skripsi/byhendrich/esp32status'
     ], { qos: 2 }, (error) => {
         if (error) {
             console.log('Subscription error:', error);
@@ -36,11 +40,6 @@ client.on('message', async (topic, message) => {
         const data = JSON.parse(message.toString());
         console.log(`Received data: ${JSON.stringify(data)} on topic: ${topic}`);
         
-        if (topic === 'skripsi/byhendrich/latency_test/response') {
-            // Handle latency response in the frontend
-            return;
-        }
-
         let newEntry;
 
         if (topic == 'skripsi/byhendrich/dashtoesp' || topic == 'skripsi/byhendrich/esptodash') {
@@ -54,7 +53,7 @@ client.on('message', async (topic, message) => {
                         Setpoint: Setpoint
                     }
                 });
-            } else if (topic === 'skripsi/byhendrich/esptodash') {
+            } else if (topic == 'skripsi/byhendrich/esptodash') {
                 newEntry = new DataValue({
                     waktu: moment().tz('Asia/Jakarta').format(),
                     nilai: {
@@ -67,7 +66,7 @@ client.on('message', async (topic, message) => {
             await newEntry.save();
             console.log('Data saved to MongoDB:', newEntry);
         } 
-        else if (topic === 'skripsi/byhendrich/esp32status') {
+        else if (topic == 'skripsi/byhendrich/esp32status') {
             console.log('Received ESP32 status update:', data.status);
         } 
         else {
@@ -78,7 +77,6 @@ client.on('message', async (topic, message) => {
     }
 });
 
-// Function to publish messages
 const publishPesan = (req, res) => {
     const message = JSON.stringify(req.body);
     client.publish('skripsi/byhendrich/dashtoesp', message, {}, (error) => {
@@ -90,24 +88,10 @@ const publishPesan = (req, res) => {
     });
 };
 
-// Function to send latency test message
-const sendLatencyTestMessage = () => {
-    const message = JSON.stringify({ sentTime: Date.now().toString() }); // Convert BigInt to string
-    client.publish('skripsi/byhendrich/latency_test/request', message, {}, (error) => {
-        if (error) {
-            console.error('Failed to publish latency test message:', error);
-        } else {
-            console.log('Latency test message sent');
-        }
-    });
-};
-
-// Schedule latency test message every 5 seconds
-setInterval(sendLatencyTestMessage, 5000);
-
 // Function to retrieve messages from MongoDB
 const getPesan = async (req, res) => {
     try {
+        const messages = await DataValue.find({}).sort({ waktu: -1 }).limit(100); // Adjust the query as needed
         res.json(messages);
     } catch (error) {
         console.error('Error retrieving messages:', error);
